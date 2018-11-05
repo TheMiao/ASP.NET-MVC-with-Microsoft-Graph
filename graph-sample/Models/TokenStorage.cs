@@ -8,5 +8,6 @@ namespace graph_sample.Models
     public static class TokenStorage
     {
         public static string AccessToken { get; set; }
+        public static string DisplayName { get; set; }
     }
 }

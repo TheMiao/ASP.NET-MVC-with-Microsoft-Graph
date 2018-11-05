@@ -9,6 +9,7 @@ using Owin;
 using System.Configuration;
 using System.Threading.Tasks;
 using graph_sample.Models;
+using graph_sample.Helper;
 
 namespace graph_sample
 {
@@ -94,6 +95,8 @@ namespace graph_sample
                 message = "Access token retrieved.";
                 debug = result.AccessToken;
                 TokenStorage.AccessToken = debug;
+                var userDetails =  await GraphHelper.GetUserDetailsAsync(TokenStorage.AccessToken);
+                TokenStorage.DisplayName = userDetails.DisplayName;
             }
             catch (MsalException ex)
             {

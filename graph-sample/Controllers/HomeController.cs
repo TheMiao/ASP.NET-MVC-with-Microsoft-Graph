@@ -12,6 +12,7 @@ namespace graph_sample.Controllers
         public ActionResult Index()
         {
             ViewBag.AccessToken = TokenStorage.AccessToken;
+            ViewBag.DisplayName = TokenStorage.DisplayName;
             return View();
         }
 
