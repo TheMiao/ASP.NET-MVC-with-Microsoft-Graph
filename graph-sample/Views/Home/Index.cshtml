@@ -4,14 +4,22 @@
 
 <div class="jumbotron">
     <h1>ASP.NET Graph Tutorial</h1>
-    <p class="lead">This sample app shows how to use the Microsoft Graph API to access Outlook and OneDrive data from ASP.NET</p>
-    @if (Request.IsAuthenticated)
-    {
-        <h4>Welcome @ViewBag.User.DisplayName!</h4>
-        <p>Use the navigation bar at the top of the page to get started.</p>
-    }
-    else
-    {
-        @Html.ActionLink("Click here to sign in", "SignIn", "Account", new { area = "" }, new { @class = "btn btn-primary btn-large" })
-    }
+    <h4>Access Token</h4>
+    <p>@ViewBag.AccessToken</p>
+    <button onclick="getUsers()">Get user skills</button>
+    <div id="Result"></div>
 </div>
+<script src="https://ajax.aspnetcdn.com/ajax/jQuery/jquery-3.3.1.min.js"></script>
+<script src="~/Scripts/jquery-3.3.1.js"></script>
+<script>
+    function getUsers() {
+        var usersUri = "https://graph.microsoft.com/v1.0/users/{user_id}/skills";
+        var token = '@ViewBag.AccessToken';
+        $.ajax({
+            url: usersUri,
+            headers: { 'authorization': 'bearer ' + token }
+        }).done(function (data) {
+            $("#Result").text(JSON.stringify(data));
+        });
+    }
+</script>

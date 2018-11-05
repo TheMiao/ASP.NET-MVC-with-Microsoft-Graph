@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Web;
 using System.Web.Mvc;
+using graph_sample.Models;
 
 namespace graph_sample.Controllers
 {
@@ -10,13 +11,13 @@ namespace graph_sample.Controllers
     {
         public ActionResult Index()
         {
+            ViewBag.AccessToken = TokenStorage.AccessToken;
             return View();
         }
 
         public ActionResult About()
         {
             ViewBag.Message = "Your application description page.";
-
             return View();
         }
 

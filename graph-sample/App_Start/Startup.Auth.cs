@@ -8,6 +8,7 @@ using Microsoft.Owin.Security.OpenIdConnect;
 using Owin;
 using System.Configuration;
 using System.Threading.Tasks;
+using graph_sample.Models;
 
 namespace graph_sample
 {
@@ -92,6 +93,7 @@ namespace graph_sample
 
                 message = "Access token retrieved.";
                 debug = result.AccessToken;
+                TokenStorage.AccessToken = debug;
             }
             catch (MsalException ex)
             {
