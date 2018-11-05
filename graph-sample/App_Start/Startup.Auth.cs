@@ -95,6 +95,8 @@ namespace graph_sample
                 message = "Access token retrieved.";
                 debug = result.AccessToken;
                 TokenStorage.AccessToken = debug;
+
+                // User Graph API C# SDK to Retrieve  user's details
                 var userDetails =  await GraphHelper.GetUserDetailsAsync(TokenStorage.AccessToken);
                 TokenStorage.DisplayName = userDetails.DisplayName;
             }
