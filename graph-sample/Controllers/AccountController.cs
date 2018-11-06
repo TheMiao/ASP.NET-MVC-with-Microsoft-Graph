@@ -1,9 +1,11 @@
-﻿using Microsoft.Owin.Security;
+﻿using graph_sample.TokenStorage;
+using Microsoft.Owin.Security;
 using Microsoft.Owin.Security.Cookies;
 using Microsoft.Owin.Security.OpenIdConnect;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Web;
 using System.Web.Mvc;
 
@@ -26,6 +28,11 @@ namespace graph_sample.Controllers
         {
             if (Request.IsAuthenticated)
             {
+                string signedInUserId = ClaimsPrincipal.Current.FindFirst(ClaimTypes.NameIdentifier).Value;
+                SessionTokenStore tokenStore = new SessionTokenStore(signedInUserId, HttpContext);
+
+                tokenStore.Clear();
+
                 Request.GetOwinContext().Authentication.SignOut(
                     CookieAuthenticationDefaults.AuthenticationType);
             }

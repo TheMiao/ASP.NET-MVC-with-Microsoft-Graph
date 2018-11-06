@@ -1,4 +1,6 @@
-﻿using Microsoft.Identity.Client;
+﻿using graph_sample.Helper;
+using graph_sample.TokenStorage;
+using Microsoft.Identity.Client;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.Owin.Security;
@@ -7,9 +9,9 @@ using Microsoft.Owin.Security.Notifications;
 using Microsoft.Owin.Security.OpenIdConnect;
 using Owin;
 using System.Configuration;
+using System.IdentityModel.Claims;
 using System.Threading.Tasks;
-using graph_sample.Models;
-using graph_sample.Helper;
+using System.Web;
 
 namespace graph_sample
 {
@@ -40,7 +42,7 @@ namespace graph_sample
                       // For demo purposes only, see below
                       ValidateIssuer = false
 
-                      // In a real multi-tenant app, you would add logic to determine whether the
+                      // In a real multitenant app, you would add logic to determine whether the
                       // issuer was from an authorized tenant
                       //ValidateIssuer = true,
                       //IssuerValidator = (issuer, token, tvp) =>
@@ -79,11 +81,13 @@ namespace graph_sample
 
         private async Task OnAuthorizationCodeReceivedAsync(AuthorizationCodeReceivedNotification notification)
         {
-            var idClient = new ConfidentialClientApplication(
-                appId, redirectUri, new ClientCredential(appSecret), null, null);
+            // Get the signed in user's id and create a token cache
+            string signedInUserId = notification.AuthenticationTicket.Identity.FindFirst(ClaimTypes.NameIdentifier).Value;
+            SessionTokenStore tokenStore = new SessionTokenStore(signedInUserId,
+                notification.OwinContext.Environment["System.Web.HttpContextBase"] as HttpContextBase);
 
-            string message;
-            string debug;
+            var idClient = new ConfidentialClientApplication(
+                appId, redirectUri, new ClientCredential(appSecret), tokenStore.GetMsalCacheInstance(), null);
 
             try
             {
@@ -92,22 +96,31 @@ namespace graph_sample
                 var result = await idClient.AcquireTokenByAuthorizationCodeAsync(
                     notification.Code, scopes);
 
-                message = "Access token retrieved.";
-                debug = result.AccessToken;
-                TokenStorage.AccessToken = debug;
+                var userDetails = await GraphHelper.GetUserDetailsAsync(result.AccessToken);
 
-                // User Graph API C# SDK to Retrieve  user's details
-                var userDetails =  await GraphHelper.GetUserDetailsAsync(TokenStorage.AccessToken);
-                TokenStorage.DisplayName = userDetails.DisplayName;
+                var cachedUser = new CachedUser()
+                {
+                    DisplayName = userDetails.DisplayName,
+                    Email = string.IsNullOrEmpty(userDetails.Mail) ?
+                    userDetails.UserPrincipalName : userDetails.Mail,
+                    Avatar = string.Empty,
+                    AccessToken = result.AccessToken
+                };
+
+                tokenStore.SaveUserDetails(cachedUser);
             }
             catch (MsalException ex)
             {
-                message = "AcquireTokenByAuthorizationCodeAsync threw an exception";
-                debug = ex.Message;
+                string message = "AcquireTokenByAuthorizationCodeAsync threw an exception";
+                notification.HandleResponse();
+                notification.Response.Redirect($"/Home/Error?message={message}&debug={ex.Message}");
             }
-
-            notification.HandleResponse();
-            notification.Response.Redirect($"/Home/Error?message={message}&debug={debug}");
+            catch (Microsoft.Graph.ServiceException ex)
+            {
+                string message = "GetUserDetailsAsync threw an exception";
+                notification.HandleResponse();
+                notification.Response.Redirect($"/Home/Error?message={message}&debug={ex.Message}");
+            }
         }
     }
 }
